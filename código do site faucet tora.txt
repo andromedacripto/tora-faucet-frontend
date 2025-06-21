@@ -20,6 +20,7 @@
       align-items: center;
       height: 100vh;
       color: #00ffc3;
+      padding: 20px; /* evita cortes em telas muito pequenas */
     }
     .container {
       background-color: rgba(0, 0, 0, 0.8);
@@ -63,6 +64,41 @@
     button:hover {
       background-color: #00c5a4;
     }
+    /* Mensagem simples e estilizada, sem fundo */
+    .message {
+      margin-top: 20px;
+      font-weight: bold;
+      font-family: monospace;
+      color: #00ffc3;
+    }
+
+    /* --- RESPONSIVIDADE --- */
+    @media (max-width: 480px) {
+      .container {
+        padding: 20px;
+        max-width: 100%;
+      }
+      h1 {
+        font-size: 1.5em;
+      }
+      p {
+        font-size: 0.9em;
+      }
+      input, button {
+        font-size: 0.9em;
+      }
+    }
+    @media (max-width: 768px) and (min-width: 481px) {
+      .container {
+        max-width: 90%;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+      p {
+        font-size: 1em;
+      }
+    }
   </style>
 </head>
 <body>
@@ -75,14 +111,21 @@
       <div class="g-recaptcha" data-sitekey="6LcKmGUrAAAAAD-9GitbSxFI3yZAWQAhjA20fGGr"></div>
       <button type="submit">CLAIM FAUCET</button>
     </form>
+    <!-- Div pra mostrar a mensagem -->
+    <div id="message" class="message"></div>
   </div>
 
   <script>
+    const messageDiv = document.getElementById("message");
+
     document.getElementById("faucetForm").addEventListener("submit", async function (e) {
       e.preventDefault();
 
       const address = document.getElementById("walletAddress").value.trim();
       const captchaResponse = grecaptcha.getResponse();
+
+      // Limpa mensagem anterior
+      messageDiv.innerHTML = "";
 
       if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
         alert("Please enter a valid wallet address.");
@@ -95,7 +138,7 @@
       }
 
       try {
-        const response = await fetch("http://localhost:3000/verify-captcha", {
+        const response = await fetch("https://tora-faucet-backend.onrender.com/verify-captcha", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -107,19 +150,24 @@
         const result = await response.json();
 
         if (result.success) {
-          alert(`✅ 10 TORA sent! Tx: ${result.txHash}`);
+          // Abrevia txHash
+          const txHash = result.txHash;
+          const shortHash = txHash.slice(0, 6) + "..." + txHash.slice(-4);
+          messageDiv.innerHTML = `✅ 10 TORA sent! Tx: <a href="https://sepolia.etherscan.io/tx/${txHash}" target="_blank" style="color:#00ffc3; text-decoration:none;">${shortHash}</a>`;
           grecaptcha.reset();
           document.getElementById("walletAddress").value = "";
         } else {
-          alert(`❌ Error: ${result.message || "Unknown error"}`);
+          messageDiv.textContent = `❌ Error: ${result.message || "Unknown error"}`;
           grecaptcha.reset();
         }
       } catch (error) {
         console.error(error);
-        alert("❌ Network or server error.");
+        messageDiv.textContent = "❌ Network or server error.";
         grecaptcha.reset();
       }
     });
   </script>
 </body>
 </html>
+
+

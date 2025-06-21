@@ -20,6 +20,7 @@
       align-items: center;
       height: 100vh;
       color: #00ffc3;
+      padding: 20px; /* evita cortes em telas muito pequenas */
     }
     .container {
       background-color: rgba(0, 0, 0, 0.8);
@@ -69,6 +70,34 @@
       font-weight: bold;
       font-family: monospace;
       color: #00ffc3;
+    }
+
+    /* --- RESPONSIVIDADE --- */
+    @media (max-width: 480px) {
+      .container {
+        padding: 20px;
+        max-width: 100%;
+      }
+      h1 {
+        font-size: 1.5em;
+      }
+      p {
+        font-size: 0.9em;
+      }
+      input, button {
+        font-size: 0.9em;
+      }
+    }
+    @media (max-width: 768px) and (min-width: 481px) {
+      .container {
+        max-width: 90%;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+      p {
+        font-size: 1em;
+      }
     }
   </style>
 </head>
@@ -140,4 +169,5 @@
   </script>
 </body>
 </html>
+
 
