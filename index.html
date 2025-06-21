@@ -63,6 +63,24 @@
     button:hover {
       background-color: #00c5a4;
     }
+    #message {
+      margin-top: 15px;
+      font-weight: 700;
+      font-size: 1.1em;
+      color: #00ffc3;
+      background: rgba(0, 255, 195, 0.15);
+      padding: 10px 15px;
+      border-radius: 12px;
+      box-shadow: 0 0 15px #00ffc3;
+      user-select: text;
+      word-break: break-word;
+      min-height: 40px;
+    }
+    #message.error {
+      color: #ff4d4d;
+      background: rgba(255, 77, 77, 0.15);
+      box-shadow: 0 0 15px #ff4d4d;
+    }
   </style>
 </head>
 <body>
@@ -74,10 +92,39 @@
       <input type="text" id="walletAddress" placeholder="Enter your wallet address" required />
       <div class="g-recaptcha" data-sitekey="6LcKmGUrAAAAAD-9GitbSxFI3yZAWQAhjA20fGGr"></div>
       <button type="submit">CLAIM FAUCET</button>
+      <div id="message"></div>
     </form>
   </div>
 
   <script>
+    const messageDiv = document.getElementById('message');
+
+    function abreviarTx(txHash) {
+      if (!txHash || txHash.length < 10) return txHash;
+      return txHash.slice(0, 8) + "..." + txHash.slice(-4);
+    }
+
+    function setMessage(text, isError = false) {
+      messageDiv.textContent = text;
+      if (isError) {
+        messageDiv.classList.add("error");
+      } else {
+        messageDiv.classList.remove("error");
+      }
+    }
+
+    function canClaim(address) {
+      const lastClaim = localStorage.getItem(`lastClaim_${address}`);
+      if (!lastClaim) return true;
+      const now = Date.now();
+      const diff = now - parseInt(lastClaim, 10);
+      return diff >= 24 * 60 * 60 * 1000; // 24 horas em ms
+    }
+
+    function setClaimTimestamp(address) {
+      localStorage.setItem(`lastClaim_${address}`, Date.now().toString());
+    }
+
     document.getElementById("faucetForm").addEventListener("submit", async function (e) {
       e.preventDefault();
 
@@ -85,12 +132,17 @@
       const captchaResponse = grecaptcha.getResponse();
 
       if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
-        alert("Please enter a valid wallet address.");
+        setMessage("Please enter a valid wallet address.", true);
         return;
       }
 
       if (!captchaResponse) {
-        alert("Please complete the CAPTCHA.");
+        setMessage("Please complete the CAPTCHA.", true);
+        return;
+      }
+
+      if (!canClaim(address)) {
+        setMessage("⏳ You can claim only once every 24 hours. Please try again later.", true);
         return;
       }
 
@@ -107,16 +159,17 @@
         const result = await response.json();
 
         if (result.success) {
-          alert(`✅ 10 TORA sent! Tx: ${result.txHash}`);
+          setMessage(`✅ 10 TORA sent! Tx: ${abreviarTx(result.txHash)}`);
           grecaptcha.reset();
           document.getElementById("walletAddress").value = "";
+          setClaimTimestamp(address);
         } else {
-          alert(`❌ Error: ${result.message || "Unknown error"}`);
+          setMessage(`❌ Error: ${result.message || "Unknown error"}`, true);
           grecaptcha.reset();
         }
       } catch (error) {
         console.error(error);
-        alert("❌ Network or server error.");
+        setMessage("❌ Network or server error.", true);
         grecaptcha.reset();
       }
     });
