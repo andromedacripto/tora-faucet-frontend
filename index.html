@@ -63,23 +63,12 @@
     button:hover {
       background-color: #00c5a4;
     }
-    #message {
-      margin-top: 15px;
-      font-weight: 700;
-      font-size: 1.1em;
+    /* Mensagem simples e estilizada, sem fundo */
+    .message {
+      margin-top: 20px;
+      font-weight: bold;
+      font-family: monospace;
       color: #00ffc3;
-      background: rgba(0, 255, 195, 0.15);
-      padding: 10px 15px;
-      border-radius: 12px;
-      box-shadow: 0 0 15px #00ffc3;
-      user-select: text;
-      word-break: break-word;
-      min-height: 40px;
-    }
-    #message.error {
-      color: #ff4d4d;
-      background: rgba(255, 77, 77, 0.15);
-      box-shadow: 0 0 15px #ff4d4d;
     }
   </style>
 </head>
@@ -92,38 +81,13 @@
       <input type="text" id="walletAddress" placeholder="Enter your wallet address" required />
       <div class="g-recaptcha" data-sitekey="6LcKmGUrAAAAAD-9GitbSxFI3yZAWQAhjA20fGGr"></div>
       <button type="submit">CLAIM FAUCET</button>
-      <div id="message"></div>
     </form>
+    <!-- Div pra mostrar a mensagem -->
+    <div id="message" class="message"></div>
   </div>
 
   <script>
-    const messageDiv = document.getElementById('message');
-
-    function abreviarTx(txHash) {
-      if (!txHash || txHash.length < 10) return txHash;
-      return txHash.slice(0, 8) + "..." + txHash.slice(-4);
-    }
-
-    function setMessage(text, isError = false) {
-      messageDiv.textContent = text;
-      if (isError) {
-        messageDiv.classList.add("error");
-      } else {
-        messageDiv.classList.remove("error");
-      }
-    }
-
-    function canClaim(address) {
-      const lastClaim = localStorage.getItem(`lastClaim_${address}`);
-      if (!lastClaim) return true;
-      const now = Date.now();
-      const diff = now - parseInt(lastClaim, 10);
-      return diff >= 24 * 60 * 60 * 1000; // 24 horas em ms
-    }
-
-    function setClaimTimestamp(address) {
-      localStorage.setItem(`lastClaim_${address}`, Date.now().toString());
-    }
+    const messageDiv = document.getElementById("message");
 
     document.getElementById("faucetForm").addEventListener("submit", async function (e) {
       e.preventDefault();
@@ -131,18 +95,16 @@
       const address = document.getElementById("walletAddress").value.trim();
       const captchaResponse = grecaptcha.getResponse();
 
+      // Limpa mensagem anterior
+      messageDiv.innerHTML = "";
+
       if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
-        setMessage("Please enter a valid wallet address.", true);
+        alert("Please enter a valid wallet address.");
         return;
       }
 
       if (!captchaResponse) {
-        setMessage("Please complete the CAPTCHA.", true);
-        return;
-      }
-
-      if (!canClaim(address)) {
-        setMessage("⏳ You can claim only once every 24 hours. Please try again later.", true);
+        alert("Please complete the CAPTCHA.");
         return;
       }
 
@@ -159,20 +121,23 @@
         const result = await response.json();
 
         if (result.success) {
-          setMessage(`✅ 10 TORA sent! Tx: ${abreviarTx(result.txHash)}`);
+          // Abrevia txHash
+          const txHash = result.txHash;
+          const shortHash = txHash.slice(0, 6) + "..." + txHash.slice(-4);
+          messageDiv.innerHTML = `✅ 10 TORA sent! Tx: <a href="https://sepolia.etherscan.io/tx/${txHash}" target="_blank" style="color:#00ffc3; text-decoration:none;">${shortHash}</a>`;
           grecaptcha.reset();
           document.getElementById("walletAddress").value = "";
-          setClaimTimestamp(address);
         } else {
-          setMessage(`❌ Error: ${result.message || "Unknown error"}`, true);
+          messageDiv.textContent = `❌ Error: ${result.message || "Unknown error"}`;
           grecaptcha.reset();
         }
       } catch (error) {
         console.error(error);
-        setMessage("❌ Network or server error.", true);
+        messageDiv.textContent = "❌ Network or server error.";
         grecaptcha.reset();
       }
     });
   </script>
 </body>
 </html>
+
