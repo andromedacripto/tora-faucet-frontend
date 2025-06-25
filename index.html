@@ -16,11 +16,11 @@
       background-image: radial-gradient(#00ffc3 1px, transparent 1px);
       background-size: 40px 40px;
       display: flex;
+      flex-direction: column;
       justify-content: center;
-      align-items: center;
-      height: 100vh;
+      min-height: 100vh;
       color: #00ffc3;
-      padding: 20px; /* evita cortes em telas muito pequenas */
+      padding: 20px;
     }
     .container {
       background-color: rgba(0, 0, 0, 0.8);
@@ -31,6 +31,7 @@
       box-shadow: 0 0 30px #00ffc3;
       width: 90%;
       max-width: 400px;
+      margin: auto;
     }
     h1 {
       font-size: 2em;
@@ -64,15 +65,22 @@
     button:hover {
       background-color: #00c5a4;
     }
-    /* Mensagem simples e estilizada, sem fundo */
     .message {
       margin-top: 20px;
       font-weight: bold;
       font-family: monospace;
       color: #00ffc3;
     }
-
-    /* --- RESPONSIVIDADE --- */
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #888;
+      font-size: 0.9rem;
+    }
+    footer a {
+      color: #0af;
+      text-decoration: none;
+    }
     @media (max-width: 480px) {
       .container {
         padding: 20px;
@@ -111,9 +119,15 @@
       <div class="g-recaptcha" data-sitekey="6LcKmGUrAAAAAD-9GitbSxFI3yZAWQAhjA20fGGr"></div>
       <button type="submit">CLAIM FAUCET</button>
     </form>
-    <!-- Div pra mostrar a mensagem -->
+
     <div id="message" class="message"></div>
   </div>
+
+  <footer>
+    ©2025 Tora Faucet.
+    <a href="https://github.com/andromedacripto" target="_blank">Powered by Tora Network</a>
+    • v0.0.1
+  </footer>
 
   <script>
     const messageDiv = document.getElementById("message");
@@ -124,7 +138,6 @@
       const address = document.getElementById("walletAddress").value.trim();
       const captchaResponse = grecaptcha.getResponse();
 
-      // Limpa mensagem anterior
       messageDiv.innerHTML = "";
 
       if (!/^0x[a-fA-F0-9]{40}$/.test(address)) {
@@ -150,7 +163,6 @@
         const result = await response.json();
 
         if (result.success) {
-          // Abrevia txHash
           const txHash = result.txHash;
           const shortHash = txHash.slice(0, 6) + "..." + txHash.slice(-4);
           messageDiv.innerHTML = `✅ 10 TORA sent! Tx: <a href="https://sepolia.etherscan.io/tx/${txHash}" target="_blank" style="color:#00ffc3; text-decoration:none;">${shortHash}</a>`;
